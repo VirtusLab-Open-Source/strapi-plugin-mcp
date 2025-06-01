@@ -1,0 +1,59 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# TypeScript and Coding Conventions
+
+## TypeScript Configuration
+- This project uses TypeScript throughout both admin and server code
+- Separate tsconfig files for admin and server sides
+- Strict type checking enabled
+
+## Import/Export Patterns
+- Use ES6 import/export syntax
+- Prefer named exports over default exports for utilities
+- Use default exports for React components and main plugin exports
+- Import types with `import type` when importing only types
+
+## Code Organization
+
+### Services ([server/src/services/](mdc:server/src/services))
+- Business logic should be in service files
+- Services export functions that can be called by controllers
+- Use dependency injection pattern where applicable
+- Example: [server/src/services/contentTypes.service.ts](mdc:server/src/services/contentTypes.service.ts)
+
+### Controllers ([server/src/controllers/](mdc:server/src/controllers))
+- Handle HTTP requests and responses
+- Keep controllers thin - delegate to services
+- Use proper HTTP status codes
+- Example: [server/src/controllers/events.controller.ts](mdc:server/src/controllers/events.controller.ts)
+
+### Components ([admin/src/components/](mdc:admin/src/components))
+- Use functional components with hooks
+- Follow React best practices
+- Use Strapi Design System components
+- Example: [admin/src/components/Initializer.tsx](mdc:admin/src/components/Initializer.tsx)
+
+## Error Handling
+- Use try-catch blocks for async operations
+- Return appropriate error responses from controllers
+- Log errors appropriately for debugging
+
+## Validation
+- Use Zod for schema validation
+- Validate input data in controllers before processing
+- Define clear interfaces for data structures
+
+## Naming Conventions
+- **Files**: kebab-case (e.g., `content-types.service.ts`)
+- **Functions**: camelCase (e.g., `getContentTypes`)
+- **Classes**: PascalCase (e.g., `ContentTypeService`)
+- **Constants**: UPPER_SNAKE_CASE (e.g., `PLUGIN_ID`)
+- **Interfaces**: PascalCase with descriptive names
+
+## Documentation
+- Use JSDoc comments for public APIs
+- Document complex business logic
+- Keep README.md updated with setup instructions

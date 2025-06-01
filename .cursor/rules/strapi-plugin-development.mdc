@@ -1,0 +1,67 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Strapi Plugin Development Guidelines
+
+## Plugin Registration
+- Plugin registration happens in [admin/src/index.ts](mdc:admin/src/index.ts)
+- Plugin ID is defined in [admin/src/pluginId.ts](mdc:admin/src/pluginId.ts) as 'mcp'
+- Menu links are added during registration with proper internationalization
+
+## Strapi v5 Plugin Architecture
+- Dual export system: admin and server components are separate
+- Admin components use React and Strapi Design System
+- Server components follow Strapi's controller/service/route pattern
+
+## Admin Panel Integration
+- Use `@strapi/design-system` components for consistent UI
+- Follow Strapi's admin panel patterns for navigation and layout
+- Implement proper internationalization using [admin/src/translations/](mdc:admin/src/translations)
+
+## API Development
+- Controllers should be thin and delegate to services
+- Use Strapi's built-in validation and error handling
+- Follow RESTful API conventions
+- Example structure in [server/src/controllers/events.controller.ts](mdc:server/src/controllers/events.controller.ts)
+
+## Service Layer
+- Business logic belongs in services ([server/src/services/](mdc:server/src/services))
+- Services can access Strapi's core functionality
+- Use dependency injection where possible
+- Example: [server/src/services/contentTypes.service.ts](mdc:server/src/services/contentTypes.service.ts)
+
+## Plugin Configuration
+- Plugin metadata is defined in [package.json](mdc:package.json) under the "strapi" key
+- Plugin kind is set to "plugin"
+- Display name and description should be meaningful
+
+## Build and Distribution
+- Use `@strapi/sdk-plugin` for building
+- Built files go to `dist/` directory
+- Both CommonJS and ESM formats are supported
+- TypeScript declarations are generated automatically
+
+## Testing
+- Type checking: `pnpm test:ts:front` and `pnpm test:ts:back`
+- Plugin verification: `pnpm verify`
+- Manual testing in development: `pnpm watch`
+
+## MCP Integration Specifics
+- This plugin integrates Model Context Protocol functionality
+- Uses `@modelcontextprotocol/sdk` for MCP operations
+- Provides content type introspection and system information
+- Handles MCP events through dedicated controllers
+
+## Development Workflow
+1. Make changes to source files in `admin/src/` or `server/src/`
+2. Use `pnpm watch` for development with hot reload
+3. Run type checking to ensure no TypeScript errors
+4. Test plugin functionality in a Strapi application
+5. Build with `pnpm build` before distribution
+
+## Plugin Dependencies
+- Peer dependencies must be satisfied by the host Strapi application
+- Core dependencies are bundled with the plugin
+- Keep dependencies minimal and well-justified

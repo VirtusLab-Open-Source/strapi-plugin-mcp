@@ -1,0 +1,75 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Strapi MCP Plugin Development Guide
+
+## Project Overview
+This is a Strapi plugin that integrates Model Context Protocol (MCP) functionality. The plugin follows Strapi v5 plugin architecture with separate admin and server components.
+
+## Project Structure
+
+### Core Files
+- [package.json](mdc:package.json) - Main package configuration with plugin metadata
+- [README.md](mdc:README.md) - Project documentation
+
+### Server Side (`server/src/`)
+- [server/src/index.ts](mdc:server/src/index.ts) - Server entry point exporting controllers, routes, and services
+- [server/src/controllers/](mdc:server/src/controllers/) - API controllers for handling requests
+  - [server/src/controllers/events.controller.ts](mdc:server/src/controllers/events.controller.ts) - Events handling controller
+- [server/src/services/](mdc:server/src/services/) - Business logic services
+  - [server/src/services/contentTypes.service.ts](mdc:server/src/services/contentTypes.service.ts) - Content types management
+  - [server/src/services/strapiInfo.service.ts](mdc:server/src/services/strapiInfo.service.ts) - Strapi information service
+- [server/src/routes/](mdc:server/src/routes/) - API route definitions
+- [server/src/@types/](mdc:server/src/@types/) - TypeScript type definitions
+
+### Admin Side (`admin/src/`)
+- [admin/src/index.ts](mdc:admin/src/index.ts) - Admin panel entry point with plugin registration
+- [admin/src/pluginId.ts](mdc:admin/src/pluginId.ts) - Plugin identifier constant
+- [admin/src/pages/](mdc:admin/src/pages/) - Admin panel pages
+  - [admin/src/pages/App.tsx](mdc:admin/src/pages/App.tsx) - Main app component
+  - [admin/src/pages/HomePage.tsx](mdc:admin/src/pages/HomePage.tsx) - Plugin home page
+- [admin/src/components/](mdc:admin/src/components/) - Reusable React components
+  - [admin/src/components/Initializer.tsx](mdc:admin/src/components/Initializer.tsx) - Plugin initializer
+  - [admin/src/components/PluginIcon.tsx](mdc:admin/src/components/PluginIcon.tsx) - Plugin icon component
+- [admin/src/translations/](mdc:admin/src/translations/) - Internationalization files
+- [admin/src/utils/](mdc:admin/src/utils/) - Utility functions
+
+## Development Guidelines
+
+### Plugin Architecture
+- This is a Strapi v5 plugin with dual exports (admin and server)
+- Uses TypeScript throughout the codebase
+- Follows Strapi plugin conventions for structure and naming
+
+### Key Dependencies
+- `@modelcontextprotocol/sdk` - Core MCP functionality
+- `@strapi/design-system` - UI components for admin panel
+- `zod` - Schema validation
+- `lodash` - Utility functions
+
+### Build System
+- Uses `@strapi/sdk-plugin` for building
+- Supports both CommonJS and ESM exports
+- TypeScript compilation for both admin and server sides
+
+### Code Style
+- Uses Prettier for code formatting ([.prettierrc](mdc:.prettierrc))
+- ESLint for code quality
+- EditorConfig for consistent editor settings ([.editorconfig](mdc:.editorconfig))
+
+## Development Commands
+- `pnpm build` - Build the plugin
+- `pnpm watch` - Watch mode for development
+- `pnpm verify` - Verify plugin structure
+- `pnpm test:ts:front` - Type check admin code
+- `pnpm test:ts:back` - Type check server code
+
+## File Naming Conventions
+- Use kebab-case for directories and files
+- Use PascalCase for React components
+- Use camelCase for TypeScript files and functions
+- Service files end with `.service.ts`
+- Controller files end with `.controller.ts`
+- Component files end with `.tsx`

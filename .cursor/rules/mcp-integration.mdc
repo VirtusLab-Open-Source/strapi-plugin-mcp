@@ -1,0 +1,72 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Model Context Protocol (MCP) Integration Guidelines
+
+## MCP Overview
+This plugin integrates Model Context Protocol functionality into Strapi, enabling AI models to interact with Strapi content and system information.
+
+## Core MCP Dependencies
+- `@modelcontextprotocol/sdk` - Primary SDK for MCP functionality
+- `zod` - Schema validation for MCP data structures
+
+## MCP Service Architecture
+
+### Content Types Service ([server/src/services/contentTypes.service.ts](mdc:server/src/services/contentTypes.service.ts))
+- Provides introspection of Strapi content types
+- Exposes content type schemas and relationships
+- Handles content type metadata for MCP clients
+
+### Strapi Info Service ([server/src/services/strapiInfo.service.ts](mdc:server/src/services/strapiInfo.service.ts))
+- Exposes Strapi system information
+- Provides version and configuration details
+- Offers plugin and system status information
+
+### Events Controller ([server/src/controllers/events.controller.ts](mdc:server/src/controllers/events.controller.ts))
+- Handles MCP event processing
+- Manages communication between MCP clients and Strapi
+- Processes MCP requests and responses
+
+## MCP Protocol Implementation
+- Follow MCP specification for message formats
+- Use proper error handling for MCP operations
+- Implement appropriate authentication and authorization
+- Ensure data validation using Zod schemas
+
+## Data Exposure Guidelines
+- Only expose necessary Strapi information through MCP
+- Implement proper access controls for sensitive data
+- Validate all incoming MCP requests
+- Sanitize data before sending to MCP clients
+
+## Error Handling for MCP
+- Use MCP-compliant error formats
+- Provide meaningful error messages
+- Log MCP-related errors for debugging
+- Handle network and protocol errors gracefully
+
+## Security Considerations
+- Validate all MCP inputs
+- Implement rate limiting for MCP endpoints
+- Use proper authentication mechanisms
+- Audit MCP operations for security compliance
+
+## Testing MCP Integration
+- Test MCP protocol compliance
+- Verify data integrity in MCP responses
+- Test error scenarios and edge cases
+- Validate performance under load
+
+## MCP Client Compatibility
+- Ensure compatibility with standard MCP clients
+- Follow MCP versioning guidelines
+- Document MCP capabilities and limitations
+- Provide clear MCP usage examples
+
+## Development Best Practices
+- Keep MCP logic separate from core Strapi functionality
+- Use dependency injection for MCP services
+- Implement proper logging for MCP operations
+- Follow MCP naming conventions for resources and tools
