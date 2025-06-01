@@ -1,5 +1,4 @@
-import type { Core } from '@strapi/strapi';
-import eventsController from './events';
+import eventsController from './events.controller';
 
 const controllers = {
   events: eventsController,

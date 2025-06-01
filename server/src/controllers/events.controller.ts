@@ -9,10 +9,8 @@ import type { StrapiContext } from '../@types/strapi';
 const eventsController = ({ strapi }: StrapiContext) => {
   const contentTypesService = strapi.plugin('mcp').service('contentTypes');
   const strapiInfoService = strapi.plugin('mcp').service('strapiInfo');
-  const transports: Record<string, StreamableHTTPServerTransport> = {
-  };
+  const transports: Map<string, StreamableHTTPServerTransport> = new Map();
 
-  // Create a single MCP server instance
   const createServer = () => {
     const server = new McpServer({
       name: 'strapi-mcp-server',
@@ -28,20 +26,19 @@ const eventsController = ({ strapi }: StrapiContext) => {
 
   const getTransport = async (ctx: any) => {
     const sessionId = getSessionId(ctx);
-    if (sessionId && transports[sessionId]) {
-      return transports[sessionId];
+    if (sessionId && transports.has(sessionId)) {
+      return transports.get(sessionId);
     }
     if (!sessionId && isInitializeRequest(ctx.request.body)) {
       const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: () => randomUUID(),
         onsessioninitialized: (sessionId) => {
-          console.log('transport', transport);
-          transports[sessionId] = transport;
+          transports.set(sessionId, transport);
         },
       });
       transport.onclose = () => {
         if (transport.sessionId) {
-          delete transports[transport.sessionId];
+          transports.delete(transport.sessionId);
         }
       };
       const server = createServer();
@@ -63,7 +60,7 @@ const eventsController = ({ strapi }: StrapiContext) => {
   return {
     async getStreamable(ctx: any) {
       const sessionId = getSessionId(ctx);
-      const transport = transports[sessionId];
+      const transport = transports.get(sessionId);
       if (!sessionId || !transport) {
         ctx.status = 400;
         ctx.body = {
@@ -80,7 +77,7 @@ const eventsController = ({ strapi }: StrapiContext) => {
     },
     async deleteStreamable(ctx: any) {
       const sessionId = getSessionId(ctx);
-      const transport = transports[sessionId];
+      const transport = transports.get(sessionId);
       if (!sessionId || !transport) {
         ctx.status = 400;
         ctx.body = {
