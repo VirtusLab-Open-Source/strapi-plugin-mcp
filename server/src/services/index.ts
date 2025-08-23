@@ -1,9 +1,11 @@
-import contentTypesService from './contentTypes.service';
-import strapiInfoService from './strapiInfo.service';
+import contentTypesService from './content-types';
+import strapiInfoService from './strapi-info';
+import servicesService from './services';
 
 const services = {
   contentTypes: contentTypesService,
   strapiInfo: strapiInfoService,
+  services: servicesService,
 };
 
 export type Services = {

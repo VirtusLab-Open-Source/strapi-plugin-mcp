@@ -1,0 +1,39 @@
+Title: Given/When/Then test convention
+
+Scope: **tests** (`**/*.test.ts`, `**/*.spec.ts`)
+
+Rule:
+- Each test block must clearly separate three phases with comments:
+  - `// Given` for setup
+  - `// When` for exercising the system under test
+  - `// Then` for assertions
+
+Guidance:
+- Prefer one assertion group under the `// Then` section.
+- Keep setup minimal; use factories/helpers for noisy data.
+- Name tests in behavior terms, not implementation details.
+
+Examples:
+
+Bad:
+```ts
+it('does X', () => {
+  const a = 1; doSomething(a);
+  expect(result).toBe(1);
+});
+```
+
+Good:
+```ts
+it('does X', () => {
+  // Given
+  const a = 1;
+
+  // When
+  const result = doSomething(a);
+
+  // Then
+  expect(result).toBe(1);
+});
+```
+

@@ -1,4 +1,5 @@
 import type { Core } from '@strapi/strapi';
+
 import { Services } from '../services';
 
 // @ts-ignore

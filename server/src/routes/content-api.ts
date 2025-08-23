@@ -17,6 +17,7 @@ export default [
       policies: [],
     },
   },
+
   {
     method: 'DELETE',
     path: '/streamable',
@@ -26,5 +27,4 @@ export default [
       policies: [],
     },
   },
-
 ];

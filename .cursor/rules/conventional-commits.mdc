@@ -1,0 +1,46 @@
+---
+description: Conventional Commits rules and examples for this repo
+globs: 
+alwaysApply: false
+---
+# Conventional Commits
+
+## Goal
+- Keep commit history readable and automatable; enable changelog generation and semantic versioning.
+
+## Format
+- Header: `type(scope)!: subject`
+  - **type**: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `build`, `ci`, `perf`, `style`, `revert`
+  - **scope** (optional): `admin`, `server`, `common`, `services`, `content-types`, `strapi-info`, `controllers`, `routes`, `tooling`, `repo`
+  - **!** (optional): breaking change indicator
+  - **subject**: imperative, lower case, no trailing period; ≤ 72 chars
+- Body (optional): why the change is made; context and implications
+- Footer (optional): `BREAKING CHANGE:` description, and issue references like `Closes #123`
+
+## Rules
+- Use present tense, imperative mood in subjects (e.g., "add", "fix", "remove").
+- Keep one logical change per commit when possible.
+- Prefer scoping to the most specific area touched.
+- Mark breaking changes either with `!` in the header or a `BREAKING CHANGE:` footer.
+
+## Examples
+```
+feat(server): add service-methods tool returning method metadata
+
+fix(content-types): include components in content-type listing
+
+refactor(common)!: unify McpToolDefinitionBuilder args order
+
+docs(admin): document HomePage and translations flow
+
+test(services): add coverage for services.tool
+
+chore(repo): bump dependencies and regenerate lockfile
+```
+
+## Anti-patterns
+- Bad: `update stuff` (no type/scope)
+- Bad: `fix` (missing subject)
+- Bad: `feat: Added New Feature.` (past tense, capitalized, trailing period)
+- Bad: Giant commits with unrelated changes; split into smaller logical commits.
+
