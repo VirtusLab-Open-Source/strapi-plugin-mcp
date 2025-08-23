@@ -1,23 +1,26 @@
 // noinspection JSUnusedGlobalSymbols
-
+import type { StrapiContext } from '@local-types/strapi';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { randomUUID } from 'node:crypto';
-import type { StrapiContext } from '../@types/strapi';
+
+import { name, version } from '../../../package.json';
 
 const eventsController = ({ strapi }: StrapiContext) => {
   const contentTypesService = strapi.plugin('mcp').service('contentTypes');
   const strapiInfoService = strapi.plugin('mcp').service('strapiInfo');
+  const servicesService = strapi.plugin('mcp').service('services');
   const transports: Map<string, StreamableHTTPServerTransport> = new Map();
 
   const createServer = () => {
     const server = new McpServer({
-      name: 'strapi-mcp-server',
-      version: '1.0.0',
+      name,
+      version,
     });
     contentTypesService.addTools(server);
     strapiInfoService.addTools(server);
+    servicesService.addTools(server);
 
     return server;
   };

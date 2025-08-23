@@ -3,6 +3,11 @@
   "include": ["./src"],
   "compilerOptions": {
     "rootDir": "../",
-    "baseUrl": "."
+    "baseUrl": ".",
+    "resolveJsonModule": true,
+    "paths": {
+      "@test/*": ["test/*"],
+      "@local-types/*": ["src/@types/*"]
+    }
   }
 }

@@ -1,0 +1,107 @@
+---
+description: Testing conventions and techniques for Strapi MCP plugin
+globs: 
+alwaysApply: false
+---
+# Testing Conventions & Techniques
+
+## Overview
+- Test runner: Vitest (`pnpm test`, `pnpm test:run`, `pnpm coverage`).
+- Test files: `**/*.spec.ts` or `**/*.test.ts` colocated with code or under `server/test`.
+- Style: Given/When/Then sections with comments. Behavior-oriented test names.
+
+## Structure and Patterns
+- **Unit tests**: Target pure logic in services and tool callbacks. Avoid real Strapi.
+- **MCP tools**: Build tool via its builder with a mock `strapi`, call `callback(args, ctx)`.
+- **Controllers**: Keep minimal; test they delegate and shape responses correctly.
+- **Services**: Assert inputs/outputs; use dependency injection for collaborators.
+
+## Strapi Mocking
+- Prefer lightweight fakes over deep mocks. Use `server/test/strapi.mock.ts` for content types/components.
+- For specialized cases, create ad-hoc mocks with only required surface:
+```ts
+const strapi = {
+  config: { get: vi.fn(() => 'value') },
+  services: { 'api::blog.post': {}, 'plugin::mcp.services': {} },
+} as unknown as Strapi;
+```
+
+## MCP Tool Testing Recipe
+1. Build tool: `const tool = getXTool(strapi);`
+2. Validate metadata: `name`, `description`, `argsSchema` (Zod parse with valid/invalid payloads).
+3. Invoke: `const res = await tool.callback(args as any, {} as any);`
+4. Extract payload: `const text = (res.content?.[0] as any)?.text; const json = JSON.parse(text ?? '{}');`
+5. Assert `json` shape: `success/isSuccess`, data fields, and error messages for negative paths.
+
+Example:
+```ts
+it('returns services list', async () => {
+  // Given
+  const strapi = { services: { 'api::blog.post': {}, 'plugin::mcp.services': {} } } as any;
+  const tool = getServicesTool(strapi);
+
+  // When
+  const res = await tool.callback({}, {} as any);
+
+  // Then
+  const payload = JSON.parse((res.content?.[0] as any).text ?? '{}');
+  expect(payload.success).toBe(true);
+  expect(payload.services).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ fullQualifiedName: 'api::blog.post', type: 'internal', name: 'post' }),
+      expect.objectContaining({ fullQualifiedName: 'plugin::mcp.services', type: 'plugin', name: 'services', plugin: 'mcp' }),
+    ])
+  );
+});
+```
+
+## Given/When/Then (GWT)
+- Use comments to separate phases:
+```ts
+// Given
+// When
+// Then
+```
+- Keep setup minimal; extract factories for noise.
+
+## Zod Validation Testing
+- For tools/services using Zod:
+  - Positive: `expect(() => schema.parse(valid)).not.toThrow();`
+  - Negative: `expect(() => schema.parse(invalid)).toThrow();`
+  - Partial/optional fields: assert accepted/required behavior.
+
+## Error Path Testing
+- Simulate thrown errors with `vi.spyOn(obj, 'method').mockImplementation(() => { throw new Error('X'); })`.
+- Verify error payload shape and message stability.
+
+## Coverage and Thresholds
+- Run `pnpm coverage` locally. Focus on branches in tools/services.
+- Do not overfit snapshots; prefer explicit assertions over snapshots for JSON payloads.
+
+## Performance and Isolation
+- Avoid global state. Reset spies with `vi.clearAllMocks()` in `afterEach`.
+- Keep tests self-contained; no file system or network unless explicitly mocked.
+
+## Examples in Repo
+- Content types tool tests: `server/src/services/content-types/tools/*.spec.ts`
+- Instance info tool test: `server/src/services/strapi-info/tools/instance-info.tool.spec.ts`
+
+## Test data generation with Faker
+- Prefer `@faker-js/faker` for generating non-essential test data like ids, names, and service/plugin identifiers.
+- Store generated values in variables and assert against those variables to keep tests stable.
+- Seed faker when determinism is needed: `faker.seed(12345)`.
+- Use domain-appropriate generators: `faker.word.noun()`, `faker.string.alphanumeric()`, etc.
+
+Example:
+```ts
+import { faker } from '@faker-js/faker';
+
+const apiNamespace = faker.word.noun();
+const apiService = faker.word.noun();
+const pluginName = faker.word.noun();
+const pluginService = faker.word.noun();
+
+const apiKey = `api::${apiNamespace}.${apiService}`;
+const pluginKey = `plugin::${pluginName}.${pluginService}`;
+const strapi = createStrapiMock({ services: [apiKey, pluginKey] });
+```
