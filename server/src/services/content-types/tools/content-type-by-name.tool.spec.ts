@@ -17,7 +17,7 @@ describe('getContentTypeByNameTool', () => {
     expect(tool.name).toBe('get-content-type-by-name');
 
     // Args schema is provided as a Zod raw shape; build an object to validate
-    const shape = z.object(tool.argsSchema);
+    const shape = z.object(tool.argsSchema!);
     const apiName = faker.word.noun();
     const contentTypeName = faker.word.noun();
     expect(() => shape.parse({ name: `api::${apiName}.${contentTypeName}` })).not.toThrow();

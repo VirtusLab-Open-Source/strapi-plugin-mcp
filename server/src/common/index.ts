@@ -33,6 +33,6 @@ export const registerTool = <Args extends ZodRawShape>({ server, tool }: ApplyTo
   } else if (argsSchema) {
     server.tool(name, argsSchema, callback);
   } else {
-    server.tool(name, callback);
+    server.tool(name, callback as ToolCallback);
   }
 };

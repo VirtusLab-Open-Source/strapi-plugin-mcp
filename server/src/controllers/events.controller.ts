@@ -1,23 +1,66 @@
 // noinspection JSUnusedGlobalSymbols
-import type { StrapiContext } from '@local-types/strapi';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { randomUUID } from 'node:crypto';
 
+import type { StrapiContext } from '@local-types/strapi';
+
 import { name, version } from '../../../package.json';
+import { getPluginConfig } from '../config';
+import { createTransportStore } from '../utils';
 
+// Constants for HTTP status codes
+const HTTP_STATUS = {
+  BAD_REQUEST: 400,
+  INTERNAL_SERVER_ERROR: 500,
+} as const;
+
+// Constants for JSON-RPC error codes
+const JSONRPC_ERROR_CODES = {
+  SERVER_ERROR: -32000,
+  INTERNAL_ERROR: -32603,
+} as const;
+
+// Constants for headers and messages
+const HEADERS = {
+  MCP_SESSION_ID: 'mcp-session-id',
+} as const;
+
+const ERROR_MESSAGES = {
+  INVALID_SESSION: 'Invalid or missing session ID',
+  INTERNAL_SERVER_ERROR: 'Internal server error',
+  TRANSPORT_SESSION_UNDEFINED: 'Transport session ID is undefined',
+} as const;
+
+/**
+ * Creates and configures the events controller for the MCP plugin.
+ * This controller handles MCP (Model Context Protocol) server connections and transport management.
+ *
+ * @param {StrapiContext} context - The Strapi context containing the strapi instance
+ * @param {object} context.strapi - The Strapi instance
+ * @returns {object} Controller object with endpoint handlers for MCP transport
+ */
 const eventsController = ({ strapi }: StrapiContext) => {
-  const contentTypesService = strapi.plugin('mcp').service('contentTypes');
-  const strapiInfoService = strapi.plugin('mcp').service('strapiInfo');
-  const servicesService = strapi.plugin('mcp').service('services');
-  const transports: Map<string, StreamableHTTPServerTransport> = new Map();
+  const plugin = strapi.plugin('mcp');
 
+  const contentTypesService = plugin.service('contentTypes');
+  const strapiInfoService = plugin.service('strapiInfo');
+  const servicesService = plugin.service('services');
+
+  const pluginConfig = getPluginConfig(strapi);
+  const transportStore = createTransportStore(pluginConfig.session);
+
+  /**
+   * Creates and configures a new MCP server instance with all available tools.
+   *
+   * @returns {McpServer} Configured MCP server with content types, Strapi info, and services tools
+   */
   const createServer = () => {
     const server = new McpServer({
       name,
       version,
     });
+
     contentTypesService.addTools(server);
     strapiInfoService.addTools(server);
     servicesService.addTools(server);
@@ -25,98 +68,146 @@ const eventsController = ({ strapi }: StrapiContext) => {
     return server;
   };
 
-  const getSessionId = (ctx: any) => ctx.headers['mcp-session-id'] as string | undefined;
-
+  /**
+   * Retrieves or creates a transport for the MCP connection based on the session ID.
+   *
+   * @param {any} ctx - The Koa context object containing request headers and body
+   * @returns {Promise<object|null>} The transport object or null if session is invalid
+   * @throws {Error} If transport session ID is undefined during creation
+   */
   const getTransport = async (ctx: any) => {
     const sessionId = getSessionId(ctx);
-    if (sessionId && transports.has(sessionId)) {
-      return transports.get(sessionId);
-    }
-    if (!sessionId && isInitializeRequest(ctx.request.body)) {
-      const transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: () => randomUUID(),
-        onsessioninitialized: (sessionId) => {
-          transports.set(sessionId, transport);
-        },
-      });
-      transport.onclose = () => {
-        if (transport.sessionId) {
-          transports.delete(transport.sessionId);
+    const server = createServer();
+
+    if (sessionId) {
+      const existing = await transportStore.get(sessionId);
+
+      if (existing.type !== 'none') {
+        if (existing.type === 'regenerated') {
+          // In service of DX, we re-initialize the transport manually. This is a hack.
+          existing.transport.sessionId = sessionId;
+          // @ts-expect-error - _initialized is private
+          existing.transport._initialized = true;
+
+          await server.connect(existing.transport);
         }
-      };
-      const server = createServer();
+
+        return existing.transport;
+      }
+    }
+
+    if (!sessionId && isInitializeRequest(ctx.request.body)) {
+      const transport = transportStore.createTransport({
+        sessionIdGenerator: () => randomUUID(),
+      });
+
+      // @ts-expect-error - sessionId is not defined
+      await transportStore.set(transport.sessionId, transport);
+
       await server.connect(transport);
+
       return transport;
     }
-    ctx.status = 400;
-    ctx.body = {
-      jsonrpc: '2.0',
-      error: {
-        code: -32000,
-        message: 'Bad Request: No valid session ID provided',
-      },
-      id: null,
-    };
+
+    ctx.status = HTTP_STATUS.BAD_REQUEST;
+    ctx.body = emptySessionResponse;
+
     return null;
   };
 
   return {
+    /**
+     * Handles GET requests for MCP streamable connections.
+     * Validates session and delegates request handling to the transport.
+     *
+     * @param {any} ctx - The Koa context object
+     * @returns {Promise<void>}
+     */
     async getStreamable(ctx: any) {
       const sessionId = getSessionId(ctx);
-      const transport = transports.get(sessionId);
-      if (!sessionId || !transport) {
-        ctx.status = 400;
-        ctx.body = {
-          jsonrpc: '2.0',
-          error: {
-            code: -32000,
-            message: 'Invalid or missing session ID',
-          },
-          id: null,
-        };
+      const readResult = await transportStore.get(sessionId);
+
+      if (!sessionId || readResult.type === 'none') {
+        ctx.status = HTTP_STATUS.BAD_REQUEST;
+        ctx.body = emptySessionResponse;
         return;
       }
-      await transport.handleRequest(ctx.req, ctx.res);
+
+      await readResult.transport.handleRequest(ctx.req, ctx.res);
     },
+
+    /**
+     * Handles DELETE requests for MCP streamable connections.
+     * Validates session and delegates request handling to the transport.
+     *
+     * @param {any} ctx - The Koa context object
+     * @returns {Promise<void>}
+     */
     async deleteStreamable(ctx: any) {
       const sessionId = getSessionId(ctx);
-      const transport = transports.get(sessionId);
-      if (!sessionId || !transport) {
-        ctx.status = 400;
-        ctx.body = {
-          jsonrpc: '2.0',
-          error: {
-            code: -32000,
-            message: 'Invalid or missing session ID',
-          },
-          id: null,
-        };
+      const readResult = await transportStore.get(sessionId);
+
+      if (!sessionId || readResult.type === 'none') {
+        ctx.status = HTTP_STATUS.BAD_REQUEST;
+        ctx.body = emptySessionResponse;
+
         return;
       }
-      await transport.handleRequest(ctx.req, ctx.res);
+
+      await readResult.transport.handleRequest(ctx.req, ctx.res);
     },
+
+    /**
+     * Handles POST requests for MCP streamable connections.
+     * Creates or retrieves transport and delegates request handling.
+     * Includes comprehensive error handling with proper HTTP status codes.
+     *
+     * @param {any} ctx - The Koa context object
+     * @returns {Promise<void>}
+     */
     async postStreamable(ctx: any) {
       try {
         const transport = await getTransport(ctx);
+
         if (transport) {
           await transport.handleRequest(ctx.req, ctx.res, ctx.request.body);
         }
       } catch (error) {
         console.error('Error in streamable endpoint:', error);
+
         if (!ctx.res.headersSent) {
-          ctx.status = 500;
-          ctx.body = {
-            jsonrpc: '2.0',
-            error: {
-              code: -32603,
-              message: 'Internal server error',
-            },
-            id: null,
-          };
+          ctx.status = HTTP_STATUS.INTERNAL_SERVER_ERROR;
+          ctx.body = internalServerErrorResponse;
         }
       }
     },
   };
+};
+
+/**
+ * Extracts the MCP session ID from the request headers.
+ *
+ * @param {any} ctx - The Koa context object
+ * @returns {string | undefined} The session ID from the 'mcp-session-id' header, or undefined if not present
+ */
+const getSessionId = (ctx: any): string | undefined => ctx.headers[HEADERS.MCP_SESSION_ID];
+
+const emptySessionResponse = {
+  jsonrpc: '2.0',
+  error: {
+    code: JSONRPC_ERROR_CODES.SERVER_ERROR,
+    message: ERROR_MESSAGES.INVALID_SESSION,
+  },
+  id: null,
+};
+
+const internalServerErrorResponse = {
+  jsonrpc: '2.0',
+  error: {
+    code: JSONRPC_ERROR_CODES.INTERNAL_ERROR,
+    message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+  },
+  id: null,
 };
 
 export default eventsController;
