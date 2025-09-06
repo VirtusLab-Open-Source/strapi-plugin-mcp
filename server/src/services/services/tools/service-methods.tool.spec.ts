@@ -16,7 +16,7 @@ describe('getServiceMethodsTool', () => {
     expect(tool.name).toBe('get-service-methods');
     expect(tool.description).toBe('Get all methods of a service');
 
-    const shape = z.object(tool.argsSchema);
+    const shape = z.object(tool.argsSchema!);
     expect(() => shape.parse({ name: faker.word.noun() })).not.toThrow();
     expect(() => shape.parse({ name: faker.word.noun(), plugin: faker.word.noun() })).not.toThrow();
     expect(() => shape.parse({})).toThrow();

@@ -18,7 +18,7 @@ describe('getComponentByNameTool', () => {
     expect(tool.name).toBe('get-component-by-name');
 
     // Args schema is provided as a Zod raw shape; build an object to validate
-    const shape = z.object(tool.argsSchema);
+    const shape = z.object(tool.argsSchema!);
     const name = faker.word.noun();
     const category = faker.word.noun();
     expect(() => shape.parse({ name })).not.toThrow();

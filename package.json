@@ -42,7 +42,9 @@
     "@strapi/design-system": "^2.0.0-rc.24",
     "@strapi/icons": "^2.0.0-rc.24",
     "@types/lodash": "^4.17.17",
+    "ioredis": "^5.7.0",
     "lodash": "^4.17.21",
+    "lru-cache": "^11.1.0",
     "react-intl": "^7.1.11",
     "zod": "^3.25.42"
   },
