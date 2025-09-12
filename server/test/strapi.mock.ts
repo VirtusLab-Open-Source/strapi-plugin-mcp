@@ -25,5 +25,15 @@ export const createStrapiMock = ({
     services[key] = {};
   }
 
-  return { contentTypes, components, services } as unknown as Strapi;
+  return { 
+    contentTypes, 
+    components, 
+    services,
+    log: {
+      info: () => {},
+      error: () => {},
+      warn: () => {},
+      debug: () => {},
+    }
+  } as unknown as Strapi;
 };

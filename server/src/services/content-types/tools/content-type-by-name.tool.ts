@@ -8,6 +8,7 @@ import { ZodOptional, ZodString, z } from 'zod';
 import { Strapi } from '@local-types/strapi';
 
 import { McpToolDefinitionBuilder } from '../../../common';
+import { buildLogger } from '../../../utils';
 import { processAttribute } from './common';
 
 export const getContentTypeByNameTool: McpToolDefinitionBuilder<{
@@ -15,6 +16,7 @@ export const getContentTypeByNameTool: McpToolDefinitionBuilder<{
   plugin: ZodOptional<ZodString>;
 }> = (strapi: Strapi) => {
   const contentTypes = new Set(Object.keys(strapi.contentTypes) as UID.ContentType[]);
+  const logger = buildLogger(strapi);
 
   return {
     name: 'get-content-type-by-name',
@@ -44,6 +46,8 @@ export const getContentTypeByNameTool: McpToolDefinitionBuilder<{
       const similar = Array.from(contentTypes).filter((contentType) => contentType.includes(name));
 
       if (similar.length > 0) {
+        logger.warn(`Content type not found: ${name}, similar: ${similar.join(', ')}`);
+
         return {
           content: [
             {
@@ -57,6 +61,8 @@ export const getContentTypeByNameTool: McpToolDefinitionBuilder<{
           ],
         } satisfies CallToolResult;
       }
+
+      logger.warn(`Content type not found: "${name}" ${plugin ? `plugin: "${plugin}"` : ''}`);
 
       return {
         content: [

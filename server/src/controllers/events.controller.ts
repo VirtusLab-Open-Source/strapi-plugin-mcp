@@ -7,7 +7,7 @@ import type { StrapiContext } from '@local-types/strapi';
 
 import { name, version } from '../../../package.json';
 import { getPluginConfig } from '../config';
-import { createTransportStore } from '../utils';
+import { buildLogger, createTransportStore } from '../utils';
 
 // Constants for HTTP status codes
 const HTTP_STATUS = {
@@ -42,13 +42,17 @@ const ERROR_MESSAGES = {
  */
 const eventsController = ({ strapi }: StrapiContext) => {
   const plugin = strapi.plugin('mcp');
+  const logger = buildLogger(strapi);
 
   const contentTypesService = plugin.service('contentTypes');
   const strapiInfoService = plugin.service('strapiInfo');
   const servicesService = plugin.service('services');
 
   const pluginConfig = getPluginConfig(strapi);
-  const transportStore = createTransportStore(pluginConfig.session);
+  const transportStore = createTransportStore({
+    strapi,
+    options: pluginConfig.session,
+  });
 
   /**
    * Creates and configures a new MCP server instance with all available tools.
@@ -89,6 +93,8 @@ const eventsController = ({ strapi }: StrapiContext) => {
           // @ts-expect-error - _initialized is private
           existing.transport._initialized = true;
 
+          logger.debug(`Regenerated transport for session ${sessionId}`);
+
           await server.connect(existing.transport);
         }
 
@@ -97,12 +103,16 @@ const eventsController = ({ strapi }: StrapiContext) => {
     }
 
     if (!sessionId && isInitializeRequest(ctx.request.body)) {
+      logger.debug('Creating new transport for session');
+
       const transport = transportStore.createTransport({
         sessionIdGenerator: () => randomUUID(),
       });
 
       // @ts-expect-error - sessionId is not defined
       await transportStore.set(transport.sessionId, transport);
+
+      logger.debug(`Created new transport for session ${transport.sessionId}`);
 
       await server.connect(transport);
 
@@ -111,6 +121,8 @@ const eventsController = ({ strapi }: StrapiContext) => {
 
     ctx.status = HTTP_STATUS.BAD_REQUEST;
     ctx.body = emptySessionResponse;
+
+    logger.debug('No session ID found, returning null');
 
     return null;
   };
@@ -133,6 +145,14 @@ const eventsController = ({ strapi }: StrapiContext) => {
         return;
       }
 
+      logger.debug(
+        `Delegating request (GET) to transport for session ${sessionId} ${JSON.stringify(
+          ctx.request.body,
+          null,
+          2
+        )}`
+      );
+
       await readResult.transport.handleRequest(ctx.req, ctx.res);
     },
 
@@ -154,6 +174,10 @@ const eventsController = ({ strapi }: StrapiContext) => {
         return;
       }
 
+      logger.debug(
+        `Delegating request (DELETE) to transport for session ${sessionId} ${JSON.stringify(ctx.request.body, null, 2)}`
+      );
+
       await readResult.transport.handleRequest(ctx.req, ctx.res);
     },
 
@@ -170,10 +194,16 @@ const eventsController = ({ strapi }: StrapiContext) => {
         const transport = await getTransport(ctx);
 
         if (transport) {
+          logger.debug(`Handling request (POST) for session ${transport.sessionId} ${JSON.stringify(ctx.request.body, null, 2)}`);
+
           await transport.handleRequest(ctx.req, ctx.res, ctx.request.body);
         }
       } catch (error) {
-        console.error('Error in streamable endpoint:', error);
+        if (error instanceof Error) {
+          logger.error(`Error in streamable endpoint: ${error.message}`);
+        } else {
+          logger.error(`Error in streamable endpoint: ${JSON.stringify(error, null, 2)}`);
+        }
 
         if (!ctx.res.headersSent) {
           ctx.status = HTTP_STATUS.INTERNAL_SERVER_ERROR;

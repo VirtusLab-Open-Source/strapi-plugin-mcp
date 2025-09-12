@@ -9,6 +9,12 @@ import eventsController from './events.controller';
 vi.mock('../utils', () => {
   return {
     createTransportStore: vi.fn(),
+    buildLogger: vi.fn(() => ({
+      info: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
+      debug: vi.fn(),
+    })),
   };
 });
 

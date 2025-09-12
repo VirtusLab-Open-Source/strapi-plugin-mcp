@@ -5,6 +5,16 @@ import { Mock, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createTransportStore } from './transport.utils';
 
+// Mock strapi object
+const mockStrapi = {
+  log: {
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn(),
+  },
+} as any;
+
 vi.mock('ioredis', () => {
   return {
     Redis: vi.fn(),
@@ -18,30 +28,48 @@ describe('createTransportStore', () => {
 
   it('validates configuration and throws on invalid options', () => {
     // Given/When/Then - invalid configuration should throw at schema validation level
-    expect(() => createTransportStore({ type: 'invalid' } as any)).toThrow();
+    expect(() => createTransportStore({ 
+      strapi: mockStrapi, 
+      options: { type: 'invalid' } as any 
+    })).toThrow();
     
     // Extended schema validation for transport-specific options
-    expect(() => createTransportStore({ type: 'memory', max: -5 })).toThrow();
+    expect(() => createTransportStore({ 
+      strapi: mockStrapi, 
+      options: { type: 'memory', max: -5 } 
+    })).toThrow();
     
     // Invalid URL format should be handled gracefully (no throw due to graceful error handling)
     expect(() => createTransportStore({ 
-      type: 'redis', 
-      connection: 'invalid-url'
+      strapi: mockStrapi,
+      options: { 
+        type: 'redis', 
+        connection: 'invalid-url'
+      }
     })).not.toThrow(); // Graceful fallback to LRU
   });
 
   it('handles missing Redis configuration gracefully', () => {
-    // Given/When - Redis type with no connection info should not throw (graceful fallback)
-    expect(() => createTransportStore({ type: 'redis' })).not.toThrow();
+    // Given/When - Redis type with no connection info should not throw (graceful fallback to LRU)
+    expect(() => createTransportStore({ 
+      strapi: mockStrapi, 
+      options: { type: 'redis' } 
+    })).not.toThrow();
     
     // Then - should create store that works with LRU fallback
-    const store = createTransportStore({ type: 'redis' });
+    const store = createTransportStore({ 
+      strapi: mockStrapi, 
+      options: { type: 'redis' } 
+    });
     expect(store.size()).toBe(0);
   });
 
   it('stores and retrieves transports, cleans on close', async () => {
     // Given
-    const store = createTransportStore();
+    const store = createTransportStore({ 
+      strapi: mockStrapi, 
+      options: { type: 'memory' } 
+    });
     const t = new StreamableHTTPServerTransport({} as any);
 
     // When
@@ -66,7 +94,10 @@ describe('createTransportStore', () => {
 
   it('creates transport and auto-registers on session initialized', async () => {
     // Given
-    const store = createTransportStore();
+    const store = createTransportStore({ 
+      strapi: mockStrapi, 
+      options: { type: 'memory' } 
+    });
     const onInit = vi.fn();
     const transport = store.createTransport({
       sessionIdGenerator: () => 'gen-1',
@@ -92,7 +123,10 @@ describe('createTransportStore', () => {
 
   it('uses LRU cache with max and ttl, and cleans on close', async () => {
     // Given
-    const store = createTransportStore({ type: 'memory', max: 2, ttlMs: 100, updateAgeOnGet: true });
+    const store = createTransportStore({ 
+      strapi: mockStrapi, 
+      options: { type: 'memory', max: 2, ttlMs: 100, updateAgeOnGet: true } 
+    });
     const t1 = new StreamableHTTPServerTransport({} as any);
     const t2 = new StreamableHTTPServerTransport({} as any);
     const t3 = new StreamableHTTPServerTransport({} as any);
@@ -145,8 +179,11 @@ describe('createTransportStore', () => {
 
     // When - should not throw despite Redis connection failure
     const store = createTransportStore({
-      type: 'redis',
-      connection: 'redis://localhost:6379',
+      strapi: mockStrapi,
+      options: {
+        type: 'redis',
+        connection: 'redis://localhost:6379',
+      },
     });
 
     // Then - store should still work with LRU fallback
@@ -173,8 +210,11 @@ describe('createTransportStore', () => {
     (Redis as unknown as Mock).mockReturnValue(client);
 
     const store = createTransportStore({
-      type: 'redis',
-      connection: 'redis://localhost:6379',
+      strapi: mockStrapi,
+      options: {
+        type: 'redis',
+        connection: 'redis://localhost:6379',
+      },
     });
     const transport = new StreamableHTTPServerTransport({} as any);
 
@@ -214,10 +254,13 @@ describe('createTransportStore', () => {
     (Redis as unknown as Mock).mockReturnValue(client);
 
     const store = createTransportStore({
-      type: 'redis',
-      ttlMs: 100,
-      keyPrefix: 'test:',
-      connection: 'redis://localhost:6379',
+      strapi: mockStrapi,
+      options: {
+        type: 'redis',
+        ttlMs: 100,
+        keyPrefix: 'test:',
+        connection: 'redis://localhost:6379',
+      },
     });
     const t = new StreamableHTTPServerTransport({} as any);
 

@@ -8,6 +8,7 @@ import { ZodOptional, ZodString, z } from 'zod';
 import { Strapi } from '@local-types/strapi';
 
 import { McpToolDefinitionBuilder } from '../../../common';
+import { buildLogger } from '../../../utils';
 import { processAttribute } from './common';
 
 export const getComponentByNameTool: McpToolDefinitionBuilder<{
@@ -15,6 +16,7 @@ export const getComponentByNameTool: McpToolDefinitionBuilder<{
   category: ZodOptional<ZodString>;
 }> = (strapi: Strapi) => {
   const components = new Set(Object.keys(strapi.components) as UID.Component[]);
+  const logger = buildLogger(strapi);
 
   return {
     name: 'get-component-by-name',
@@ -42,6 +44,8 @@ export const getComponentByNameTool: McpToolDefinitionBuilder<{
       const similar = Array.from(components).filter((component) => component.includes(name));
 
       if (similar.length > 0) {
+        logger.warn(`Component not found: ${name}, similar: ${similar.join(', ')}`);
+
         return {
           content: [
             {
@@ -56,6 +60,8 @@ export const getComponentByNameTool: McpToolDefinitionBuilder<{
         } satisfies CallToolResult;
       }
 
+      logger.warn(`Component not found: "${name}"`);
+
       return {
         content: [
           {
@@ -63,7 +69,7 @@ export const getComponentByNameTool: McpToolDefinitionBuilder<{
             text: JSON.stringify({
               success: false,
               error: 'Component not found',
-              suggestions: similar,
+              suggestions: [],
             }),
           },
         ],
