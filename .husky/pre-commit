@@ -1,1 +1,2 @@
 pnpm test:run
+pnpm test:ts
