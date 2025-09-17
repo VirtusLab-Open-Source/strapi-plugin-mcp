@@ -66,6 +66,29 @@ describe('applyTool', () => {
     );
   });
 
+  it('registers tool with argsSchema and annotations (no description)', () => {
+    // Given
+    const toolSpy = vi.fn();
+    const server: FakeMcpServer = { tool: toolSpy };
+    const tool: McpToolDefinition<ZodRawShape> = {
+      name: 'with-args-annotations',
+      callback: vi.fn(),
+      argsSchema: {},
+      annotations: {},
+    };
+
+    // When
+    registerTool({ server: server as unknown as McpServer, tool });
+
+    // Then
+    expect(toolSpy).toHaveBeenCalledWith(
+      'with-args-annotations',
+      expect.any(Object),
+      expect.any(Object),
+      expect.any(Function)
+    );
+  });
+
   it('registers tool with description, argsSchema, and annotations', () => {
     // Given
     const toolSpy = vi.fn();

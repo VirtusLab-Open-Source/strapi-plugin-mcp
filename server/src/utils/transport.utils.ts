@@ -4,7 +4,10 @@ import { Redis } from 'ioredis';
 import { LRUCache } from 'lru-cache';
 import { z } from 'zod';
 
+import { Strapi } from '@local-types/strapi';
+
 import { LruSessionConfigSchema, RedisSessionConfigSchema } from '../config';
+import { buildLogger } from './logger.utils';
 
 export type TransportStoreMode = 'lru' | 'redis';
 
@@ -111,15 +114,22 @@ const TransportOptionsSchema = z.discriminatedUnion('type', [
   RedisSessionConfigSchema,
 ]);
 
+interface CreateTransportStoreOptions {
+  strapi: Strapi;
+  options: TransportStoreOptions;
+}
+
 /**
  * Create a transport store.
  *
  * - In 'memory' mode, keeps transports in an in-memory LRU with TTL.
  * - In 'redis' mode, validates Redis config and mirrors session presence in Redis (not the transport).
  */
-export function createTransportStore(
-  options: TransportStoreOptions = defaultLruOptions
-): TransportStore {
+export function createTransportStore({
+  options,
+  strapi,
+}: CreateTransportStoreOptions): TransportStore {
+  const logger = buildLogger(strapi);
   const parsed = TransportOptionsSchema.parse(options);
 
   let lruStore: LRUCache<string, StreamableHTTPServerTransport> | undefined;
@@ -142,8 +152,6 @@ export function createTransportStore(
   lruStore = new LRUCache<string, StreamableHTTPServerTransport>(lruResolved as any);
 
   if (parsed.type === 'redis') {
-    const debug = parsed.debug ?? false;
-
     try {
       // Create Redis client with proper configuration
       if (parsed.connection) {
@@ -152,45 +160,44 @@ export function createTransportStore(
             maxRetriesPerRequest: 3,
             lazyConnect: true,
           });
+
+          logger.info('Redis transport store connected successfully');
         } else {
           redisClient = new Redis({
             ...parsed.connection,
             maxRetriesPerRequest: 3,
             lazyConnect: true,
           });
+
+          logger.info('Redis transport store connected successfully');
         }
       } else {
+        logger.error('Redis storage selected but no redis client configuration or url provided');
+
         throw new Error('Redis storage selected but no redis client configuration or url provided');
       }
 
-      if (debug) {
-        // Test connection and handle errors gracefully
-        redisClient.on('error', (error) => {
-          console.warn(
-            'Redis connection error (transport store will fall back to LRU only):',
-            error.message
-          );
-        });
-
-        redisClient.on('connect', () => {
-          console.log('Redis transport store connected successfully');
-        });
-
-        // Attempt initial connection test
-        redisClient.ping().catch((error) => {
-          console.warn(
-            'Redis initial connection test failed (will retry on demand):',
-            error.message
-          );
-        });
-      }
-    } catch (error) {
-      if (debug) {
-        console.warn(
-          'Failed to initialize Redis client, falling back to LRU-only mode:',
-          error instanceof Error ? error.message : 'Unknown error'
+      // Test connection and handle errors gracefully
+      redisClient.on('error', (error) => {
+        logger.warn(
+          `Redis connection error (transport store will fall back to LRU only): ${error.message}`
         );
-      }
+      });
+
+      redisClient.on('connect', () => {
+        logger.info('Redis transport store connected successfully');
+      });
+
+      // Attempt initial connection test
+      redisClient.ping().catch((error) => {
+        logger.warn(
+          `Redis initial connection test failed (will retry on demand): ${error.message}`
+        );
+      });
+    } catch (error) {
+      logger.error(
+        `Failed to initialize Redis client, falling back to LRU-only mode: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
 
       redisClient = undefined;
     }
@@ -225,11 +232,12 @@ export function createTransportStore(
         const key = generateRedisKey({ options: redisOptions, sessionId });
 
         await redisClient.set(key, '1', 'PX', ttlMs);
+
+        logger.debug(`Redis session presence set for session ${sessionId}`);
       } catch (error) {
         // Best-effort Redis operation; log but don't throw to maintain local functionality
-        console.warn(
-          'Failed to set Redis session presence:',
-          error instanceof Error ? error.message : 'Unknown error'
+        logger.error(
+          `Failed to set Redis session presence: ${error instanceof Error ? error.message : 'Unknown error'}`
         );
       }
     }
@@ -261,15 +269,22 @@ export function createTransportStore(
 
           await set(sessionId, session);
 
+          logger.debug(`Regenerated transport for session ${sessionId}`);
+
           return { type: 'regenerated', transport: session };
         }
       } catch (error) {
         // Redis lookup failed; log but continue with local-only behavior
-        console.warn(
-          'Failed to check Redis session presence:',
-          error instanceof Error ? error.message : 'Unknown error'
+        logger.error(
+          `Failed to check Redis session presence: ${error instanceof Error ? error.message : 'Unknown error'}`
         );
       }
+    }
+
+    if (session) {
+      logger.debug(`Found transport for session ${sessionId}`);
+    } else {
+      logger.debug(`No transport found for session ${sessionId}`);
     }
 
     return session ? { type: 'existing', transport: session } : { type: 'none' };
@@ -281,18 +296,22 @@ export function createTransportStore(
     if (redisClient && parsed.type === 'redis') {
       try {
         const key = generateRedisKey({ options: parsed as RedisTransportStoreOptions, sessionId });
-        redisClient.del(key).catch((error) => {
-          // Log Redis deletion errors but don't throw
-          console.warn(
-            'Failed to delete Redis session:',
-            error instanceof Error ? error.message : 'Unknown error'
-          );
-        });
+
+        redisClient
+          .del(key)
+          .then(() => {
+            logger.debug(`Redis session presence deleted for session ${sessionId}`);
+          })
+          .catch((error) => {
+            // Log Redis deletion errors but don't throw
+            logger.warn(
+              `Failed to delete Redis session: ${error instanceof Error ? error.message : 'Unknown error'}`
+            );
+          });
       } catch (error) {
         // Log Redis operation errors but don't throw
-        console.warn(
-          'Failed to initiate Redis session deletion:',
-          error instanceof Error ? error.message : 'Unknown error'
+        logger.error(
+          `Failed to initiate Redis session deletion: ${error instanceof Error ? error.message : 'Unknown error'}`
         );
       }
     }
@@ -303,6 +322,8 @@ export function createTransportStore(
       sessionIdGenerator: options.sessionIdGenerator,
       onsessioninitialized: (sessionId: string) => {
         set(sessionId, transport);
+
+        logger.debug(`Initialized transport for session ${sessionId}`);
 
         if (typeof options.onsessioninitialized === 'function') {
           try {
@@ -326,11 +347,15 @@ export function createTransportStore(
         if (transport.sessionId) {
           remove(transport.sessionId);
         }
+
+        logger.debug(`Transport closed for session ${transport.sessionId}`);
       }
     };
 
     return transport;
   };
+
+  logger.info('Transport store initialized');
 
   return {
     get,

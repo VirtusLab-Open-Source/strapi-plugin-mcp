@@ -18,7 +18,6 @@ export const RedisSessionConfigSchema = z.object({
   connection: z.string().or(redisClientConfigSchema).optional(),
   ttlMs: z.number().optional(),
   keyPrefix: z.string().optional(),
-  debug: z.boolean().optional(),
 });
 
 export const LruSessionConfigSchema = z.object({

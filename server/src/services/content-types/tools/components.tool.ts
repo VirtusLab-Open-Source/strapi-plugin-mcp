@@ -1,9 +1,9 @@
 import { UID } from '@strapi/strapi';
 import { z } from 'zod';
 
-import { McpToolDefinitionBuilder } from '../../../common';
-
 import { Strapi } from '@local-types/strapi';
+
+import { McpToolDefinitionBuilder } from '../../../common';
 
 export const getComponentsTool: McpToolDefinitionBuilder<{}> = (strapi: Strapi) => {
   const components = Object.keys(strapi.components) as UID.Component[];

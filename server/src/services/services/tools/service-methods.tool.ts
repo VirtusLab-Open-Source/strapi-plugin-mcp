@@ -5,12 +5,14 @@ import { ZodOptional, ZodString, z } from 'zod';
 import { Strapi } from '@local-types/strapi';
 
 import { McpToolDefinitionBuilder } from '../../../common';
+import { buildLogger } from '../../../utils';
 
 export const getServiceMethodsTool: McpToolDefinitionBuilder<{
   name: ZodString;
   plugin: ZodOptional<ZodString>;
 }> = (strapi: Strapi) => {
   const services = new Set(Object.keys(strapi.services) as UID.Service[]);
+  const logger = buildLogger(strapi);
 
   return {
     name: 'get-service-methods',
@@ -55,6 +57,8 @@ export const getServiceMethodsTool: McpToolDefinitionBuilder<{
       const possibleServiceNames = Array.from(services).filter((service) => service.includes(name));
 
       if (possibleServiceNames.length > 0) {
+        logger.warn(`Service not found: ${name}, similar: ${possibleServiceNames.join(', ')}`);
+
         return {
           content: [
             {
@@ -68,6 +72,8 @@ export const getServiceMethodsTool: McpToolDefinitionBuilder<{
           ],
         } satisfies CallToolResult;
       }
+
+      logger.warn(`Service not found: "${name}" ${plugin ? `plugin: "${plugin}"` : ''}`);
 
       return {
         content: [

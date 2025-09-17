@@ -169,6 +169,12 @@ function createStrapiServiceMock({
     service(uid: string) {
       return registry[uid];
     },
+    log: {
+      info: () => {},
+      error: () => {},
+      warn: () => {},
+      debug: () => {},
+    },
   };
 }
 
