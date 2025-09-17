@@ -1,31 +1,113 @@
-# Use the latest 2.1 version of CircleCI pipeline process engine.
-# See: https://circleci.com/docs/reference/configuration-reference
 version: 2.1
-
-# Define a job to be invoked later in a workflow.
-# See: https://circleci.com/docs/guides/orchestrate/jobs-steps/#jobs-overview & https://circleci.com/docs/reference/configuration-reference/#jobs
+orbs:
+  codecov: codecov/codecov@5
 jobs:
-  say-hello:
-    # Specify the execution environment. You can specify an image from Docker Hub or use one of our convenience images from CircleCI's Developer Hub.
-    # See: https://circleci.com/docs/guides/execution-managed/executor-intro/ & https://circleci.com/docs/reference/configuration-reference/#executor-job
+  test:
+    environment:
+      # CODECOV_TOKEN: c803c20c-c45d-4a63-9ba9-58c7d5d05bbf
     docker:
-      # Specify the version you desire here
-      # See: https://circleci.com/developer/images/image/cimg/base
-      - image: cimg/base:current
-
-    # Add steps to the job
-    # See: https://circleci.com/docs/guides/orchestrate/jobs-steps/#steps-overview & https://circleci.com/docs/reference/configuration-reference/#steps
+      - image: cimg/node:20.12.2
+    working_directory: ~/repo
+    resource_class: large
     steps:
-      # Checkout the code as the first step.
       - checkout
       - run:
-          name: "Say hello"
-          command: "echo Hello, World!"
-
-# Orchestrate jobs using workflows
-# See: https://circleci.com/docs/guides/orchestrate/workflows/ & https://circleci.com/docs/reference/configuration-reference/#workflows
+          name: set GIT name and email
+          command: |
+            git config --global -l
+            git config --global user.email "$GIT_COMMITTER_EMAIL"
+            git config --global user.name "$GIT_COMMITTER_NAME"
+            git config --global -l
+      - restore_cache:
+          keys:
+            # when lock file changes, use increasingly general patterns to restore cache
+            - strapi-plugin-mcp-1726588800-{{ checksum "yarn.lock" }}
+            - strapi-plugin-mcp-1726588800
+      - run:
+          name: Echo versions
+          command: |
+            node --version
+            yarn --version
+      - run:
+          name: Configure NPM
+          command: |
+            echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN_SENSINUM" > ~/.npmrc
+      - run:
+          name: Install
+          command: |
+            yarn install
+      - run:
+          name: Test
+          command: |
+            yarn test:run
+      # - codecov/upload:
+      #     flags: unittest
+      - save_cache:
+          paths:
+            - ./node_modules
+          key: strapi-plugin-mcp-1726588800-{{ checksum "yarn.lock" }}
+      - persist_to_workspace:
+          root: ~/repo
+          paths: .
+  deploy:
+    docker:
+      - image: cimg/node:20.12.2
+    working_directory: ~/repo
+    resource_class: large
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - run:
+          name: Configure NPM
+          command: |
+            echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN_SENSINUM" > ~/.npmrc
+      - run:
+          name: Build
+          command: |
+            yarn build
+      - run:
+          name: Publish package
+          command: npm publish --tag latest
+  deployBeta:
+    docker:
+      - image: cimg/node:20.12.2
+    working_directory: ~/repo
+    resource_class: large
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - run:
+          name: Configure NPM
+          command: |
+            echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN_SENSINUM" > ~/.npmrc
+      - run:
+          name: Build
+          command: |
+            yarn build
+      - run:
+          name: Publish package
+          command: npm publish --tag beta
 workflows:
-  say-hello-workflow: # This is the name of the workflow, feel free to change it to better match your workflow.
-    # Inside the workflow, you define the jobs you want to run.
+  version: 2
+  test-deploy:
     jobs:
-      - say-hello
+      - test:
+          filters:
+            tags:
+              only: /^v.*/
+      - deploy:
+          requires:
+            - test
+          filters:
+            tags:
+              only: /^v\d+\.\d+\.\d+$/
+            branches:
+              ignore: /.*/
+      - deployBeta:
+          requires:
+            - test
+          filters:
+            tags:
+              only: /^v.*-beta\.\d+$/
+            branches:
+              ignore: /.*/

@@ -83,7 +83,7 @@
     "displayName": "",
     "description": ""
   },
-  "name": "strapi-plugin-mcp",
+  "name": "@sensinum/strapi-plugin-mcp",
   "description": "",
   "license": "MIT",
   "author": "Maksymilian Pamuła <mpamula@virtuslab.com>",
