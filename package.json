@@ -27,7 +27,9 @@
     "test:watch": "vitest",
     "test:run": "vitest run",
     "coverage": "vitest run --coverage",
-    "prepare": "husky"
+    "prepare": "husky",
+    "prepare-release": "node scripts/prepare-release.js",
+    "changelog": "node scripts/generate-changelog.js && git add CHANGELOG.md && git commit --amend --no-edit --no-verify"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.18.0",
