@@ -290,6 +290,34 @@ The plugin exposes several categories of tools:
 
 All tools follow MCP protocol standards and provide comprehensive error handling and validation.
 
+### Custom Tools
+
+The plugin supports registering custom MCP tools through the custom service. This allows developers to extend the plugin's functionality by adding domain-specific tools that integrate with their Strapi application. Custom tools are registered using the `registerTool` method and become available to MCP clients alongside the built-in tools.
+
+The `registerTool` method accepts a `McpToolDefinition` object with the following TypeScript interface: `name` (string) for the tool identifier, `callback` (ToolCallback) for the execution function that returns MCP-formatted content, optional `argsSchema` (ZodRawShape) for argument validation, optional `description` (string) for tool documentation, and optional `annotations` (ToolAnnotations) for additional metadata. The callback function receives validated arguments and must return content in MCP format with a `content` array containing text, image, or other supported content types.
+
+```ts
+
+const mpcCustomService = strapi.plugin("mcp").service("custom");
+
+mpcCustomService.registerTool({
+  name: "custom-mango",
+  description: "Mango tool",
+  argsSchema: {},
+  callback: async () => ({
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify({
+          success: true,
+          message: "Mango tool",
+        }),
+      },
+    ],
+  }),
+});
+```
+
 ## Usage Examples
 
 Once your MCP client is connected, you can interact with your Strapi instance using natural language. Here are comprehensive examples of how to use the plugin's capabilities:
