@@ -1,11 +1,13 @@
 import contentTypesService from './content-types';
 import strapiInfoService from './strapi-info';
 import servicesService from './services';
+import customService from './custom';
 
 const services = {
   contentTypes: contentTypesService,
   strapiInfo: strapiInfoService,
   services: servicesService,
+  custom: customService,
 };
 
 export type Services = {

@@ -47,6 +47,7 @@ const eventsController = ({ strapi }: StrapiContext) => {
   const contentTypesService = plugin.service('contentTypes');
   const strapiInfoService = plugin.service('strapiInfo');
   const servicesService = plugin.service('services');
+  const customService = plugin.service('custom');
 
   const pluginConfig = getPluginConfig(strapi);
   const transportStore = createTransportStore({
@@ -68,6 +69,7 @@ const eventsController = ({ strapi }: StrapiContext) => {
     contentTypesService.addTools(server);
     strapiInfoService.addTools(server);
     servicesService.addTools(server);
+    customService.addTools(server);
 
     return server;
   };
