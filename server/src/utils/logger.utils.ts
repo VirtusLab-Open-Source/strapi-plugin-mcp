@@ -4,6 +4,8 @@ const prefix = 'strapi-mcp-plugin';
 
 const getMessage = (message: string) => `${prefix}::"${message}"`;
 
+export type Logger = ReturnType<typeof buildLogger>;
+
 /**
  * Creates a logger instance with consistent formatting for the Strapi MCP plugin.
  * 

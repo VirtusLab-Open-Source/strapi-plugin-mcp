@@ -26,6 +26,7 @@ export const LruSessionConfigSchema = z.object({
 
 export const PluginConfigSchema = z.object({
   session: z.discriminatedUnion('type', [RedisSessionConfigSchema, LruSessionConfigSchema]),
+  allowedIPs: z.array(z.string()).optional(),
 });
 
 export type PluginConfig = z.infer<typeof PluginConfigSchema>;

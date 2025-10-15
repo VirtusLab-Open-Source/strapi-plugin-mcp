@@ -1,5 +1,7 @@
 # Strapi MCP Plugin
 
+> ⚠️ **SECURITY WARNING**: This plugin exposes internal Strapi functionality and should **NEVER** be enabled in production environments. It is designed for development and local use only. Always disable this plugin before deploying to production.
+
 A Strapi v5 plugin that integrates Model Context Protocol (MCP) functionality, enabling AI models to interact with your Strapi content and system information through a standardized protocol.
 
 ## Overview
@@ -13,10 +15,20 @@ This plugin provides MCP (Model Context Protocol) integration for Strapi, allowi
 
 The plugin exposes MCP tools through a streamable HTTP transport, making it easy to integrate with Claude Desktop, Cursor, and other MCP-compatible clients.
 
-**Remember to disable this plugin for production environment.**
+## Prerequisites
+
+Before installing this plugin, ensure your environment meets the following requirements:
+
+- **Strapi**: v5.0.0 or higher
+- **Node.js**: v18.0.0 or higher (recommended: v20 LTS)
+- **Package Manager**: npm, yarn, or pnpm
+- **Redis** (optional): v6.0.0 or higher (only required if using Redis session management)
+
+**Note**: After installation, you may need to restart your Strapi server for the plugin to be fully initialized.
 
 ## Table of Contents
 
+- [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Integration Guide](#integration-guide)
 - [Configuration](#configuration)
@@ -193,7 +205,7 @@ module.exports = {
 };
 ```
 
-#### Option 3: Redis with Custom Port (as requested)
+#### Option 3: Redis with Custom Port
 
 ```javascript
 // config/plugins.js
@@ -237,6 +249,48 @@ module.exports = {
 - `connection`: Redis connection configuration (object or URL string)
 - `ttlMs`: Session timeout in milliseconds (default: 600000 - 10 minutes)
 - `keyPrefix`: Redis key prefix for sessions (default: "mcp:session")
+
+### IP Allowlist
+
+For enhanced security, you can restrict access to the MCP endpoints by IP address. Add the `allowedIPs` array to your configuration:
+
+```javascript
+// config/plugins.js
+module.exports = {
+  // ... other plugins
+  mcp: {
+    enabled: true,
+    config: {
+      session: {
+        type: "memory"
+      },
+      allowedIPs: ["127.0.0.1", "::1", "192.168.1.100"]
+    }
+  }
+};
+```
+
+```typescript
+// config/plugins.ts
+export default {
+  // ... other plugins
+  mcp: {
+    enabled: true,
+    config: {
+      session: {
+        type: "memory"
+      },
+      allowedIPs: ["127.0.0.1", "::1", "192.168.1.100"]
+    }
+  }
+};
+```
+
+**IP Allowlist options:**
+- `allowedIPs`: Array of IP addresses allowed to access the MCP endpoints (default: `["127.0.0.1", "::1"]`)
+- Supports both IPv4 and IPv6 addresses
+- If not configured, only localhost connections are allowed by default
+- Requests from IPs not in the allowlist will receive a 403 Forbidden response
 
 ### Environment Variables
 
@@ -297,10 +351,9 @@ The plugin supports registering custom MCP tools through the custom service. Thi
 The `registerTool` method accepts a `McpToolDefinition` object with the following TypeScript interface: `name` (string) for the tool identifier, `callback` (ToolCallback) for the execution function that returns MCP-formatted content, optional `argsSchema` (ZodRawShape) for argument validation, optional `description` (string) for tool documentation, and optional `annotations` (ToolAnnotations) for additional metadata. The callback function receives validated arguments and must return content in MCP format with a `content` array containing text, image, or other supported content types.
 
 ```ts
+const mcpCustomService = strapi.plugin("mcp").service("custom");
 
-const mpcCustomService = strapi.plugin("mcp").service("custom");
-
-mpcCustomService.registerTool({
+mcpCustomService.registerTool({
   name: "custom-mango",
   description: "Mango tool",
   argsSchema: {},

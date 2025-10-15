@@ -33,8 +33,6 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.18.0",
-    "@strapi/design-system": "^2.0.0-rc.24",
-    "@strapi/icons": "^2.0.0-rc.24",
     "@types/lodash": "^4.17.20",
     "ioredis": "^5.7.0",
     "lodash": "^4.17.21",
