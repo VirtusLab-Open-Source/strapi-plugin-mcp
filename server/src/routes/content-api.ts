@@ -5,7 +5,7 @@ export default [
     handler: 'events.getStreamable',
     config: {
       auth: false,
-      policies: [],
+      policies: ['plugin::mcp.ip-allowlist'],
     },
   },
   {
@@ -14,7 +14,7 @@ export default [
     handler: 'events.postStreamable',
     config: {
       auth: false,
-      policies: [],
+      policies: ['plugin::mcp.ip-allowlist'],
     },
   },
 
@@ -24,7 +24,7 @@ export default [
     handler: 'events.deleteStreamable',
     config: {
       auth: false,
-      policies: [],
+      policies: ['plugin::mcp.ip-allowlist'],
     },
   },
 ];

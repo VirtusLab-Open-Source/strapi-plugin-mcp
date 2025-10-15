@@ -7,7 +7,7 @@ import type { StrapiContext } from '@local-types/strapi';
 
 import { name, version } from '../../../package.json';
 import { getPluginConfig } from '../config';
-import { buildLogger, createTransportStore } from '../utils';
+import { Logger, buildLogger, createTransportStore } from '../utils';
 
 // Constants for HTTP status codes
 const HTTP_STATUS = {
@@ -31,6 +31,12 @@ const ERROR_MESSAGES = {
   INTERNAL_SERVER_ERROR: 'Internal server error',
   TRANSPORT_SESSION_UNDEFINED: 'Transport session ID is undefined',
 } as const;
+
+const checkEnv = (logger: Logger) => {
+  if (process.env.NODE_ENV === 'production') {
+    logger.warn('MCP plugin must not be enabled in production');
+  }
+};
 
 /**
  * Creates and configures the events controller for the MCP plugin.
@@ -138,6 +144,8 @@ const eventsController = ({ strapi }: StrapiContext) => {
      * @returns {Promise<void>}
      */
     async getStreamable(ctx: any) {
+      checkEnv(logger);
+
       const sessionId = getSessionId(ctx);
       const readResult = await transportStore.get(sessionId);
 
@@ -166,6 +174,8 @@ const eventsController = ({ strapi }: StrapiContext) => {
      * @returns {Promise<void>}
      */
     async deleteStreamable(ctx: any) {
+      checkEnv(logger);
+
       const sessionId = getSessionId(ctx);
       const readResult = await transportStore.get(sessionId);
 
@@ -192,11 +202,15 @@ const eventsController = ({ strapi }: StrapiContext) => {
      * @returns {Promise<void>}
      */
     async postStreamable(ctx: any) {
+      checkEnv(logger);
+
       try {
         const transport = await getTransport(ctx);
 
         if (transport) {
-          logger.debug(`Handling request (POST) for session ${transport.sessionId} ${JSON.stringify(ctx.request.body, null, 2)}`);
+          logger.debug(
+            `Handling request (POST) for session ${transport.sessionId} ${JSON.stringify(ctx.request.body, null, 2)}`
+          );
 
           await transport.handleRequest(ctx.req, ctx.res, ctx.request.body);
         }

@@ -238,6 +238,48 @@ module.exports = {
 - `ttlMs`: Session timeout in milliseconds (default: 600000 - 10 minutes)
 - `keyPrefix`: Redis key prefix for sessions (default: "mcp:session")
 
+### IP Allowlist
+
+For enhanced security, you can restrict access to the MCP endpoints by IP address. Add the `allowedIPs` array to your configuration:
+
+```javascript
+// config/plugins.js
+module.exports = {
+  // ... other plugins
+  mcp: {
+    enabled: true,
+    config: {
+      session: {
+        type: "memory"
+      },
+      allowedIPs: ["127.0.0.1", "::1", "192.168.1.100"]
+    }
+  }
+};
+```
+
+```typescript
+// config/plugins.ts
+export default {
+  // ... other plugins
+  mcp: {
+    enabled: true,
+    config: {
+      session: {
+        type: "memory"
+      },
+      allowedIPs: ["127.0.0.1", "::1", "192.168.1.100"]
+    }
+  }
+};
+```
+
+**IP Allowlist options:**
+- `allowedIPs`: Array of IP addresses allowed to access the MCP endpoints (default: `["127.0.0.1", "::1"]`)
+- Supports both IPv4 and IPv6 addresses
+- If not configured, only localhost connections are allowed by default
+- Requests from IPs not in the allowlist will receive a 403 Forbidden response
+
 ### Environment Variables
 
 You can also use environment variables in your configuration:

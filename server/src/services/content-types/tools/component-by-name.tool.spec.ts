@@ -1,9 +1,10 @@
 import { faker } from '@faker-js/faker';
 import { createStrapiMock } from '@test/strapi.mock';
 import fs from 'fs';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
+import { Logger } from '../../../utils';
 import { getComponentByNameTool, getComponentSchemaFilePath } from './component-by-name.tool';
 
 describe('getComponentByNameTool', () => {
@@ -117,6 +118,21 @@ describe('getComponentByNameTool', () => {
 });
 
 describe('getComponentSchemaFilePath', () => {
+  const logger: Logger = {
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn(),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.resetAllMocks();
+  });
+
   it('returns the first matching schema path when file exists', () => {
     // Given
     const name = 'units.file-data';
@@ -127,7 +143,7 @@ describe('getComponentSchemaFilePath', () => {
 
     try {
       // When
-      const result = getComponentSchemaFilePath(name);
+      const result = getComponentSchemaFilePath({ name, logger });
 
       // Then
       expect(result).toBe(target);
@@ -141,9 +157,10 @@ describe('getComponentSchemaFilePath', () => {
     const invalid = 'invalidNameWithoutDot';
 
     // When
-    const result = getComponentSchemaFilePath(invalid);
+    const result = getComponentSchemaFilePath({ name: invalid, logger });
 
     // Then
     expect(result).toBeNull();
+    expect(logger.warn).toHaveBeenCalled();
   });
 });
