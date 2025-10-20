@@ -1,8 +1,25 @@
-# Strapi MCP Plugin
+<div align="center" width="150px">
+  <img style="width: 150px; height: auto;" src="https://www.sensinum.com/img/open-source/strapi-plugin-mcp/logo.png" alt="Logo - Strapi Plugin MCP" />
+</div>
+<div align="center">
+  <h1>Strapi - MCP Plugin</h1>
+  <p>AI models access to the Strapi Context via the Model Context Protocol (MCP)</p>
+  <a href="https://www.npmjs.org/package/@sensinum/strapi-plugin-mcp">
+    <img alt="GitHub package.json version" src="https://img.shields.io/github/package-json/v/VirtusLab-Open-Source/strapi-plugin-mcp?label=npm&logo=npm">
+  </a>
+  <a href="https://www.npmjs.org/package/@sensinum/strapi-plugin-mcp">
+    <img src="https://img.shields.io/npm/dm/@sensinum/strapi-plugin-mcp.svg" alt="Monthly download on NPM" />
+  </a>
+  <a href="https://circleci.com/gh/VirtusLab-Open-Source/strapi-plugin-mcp">
+    <img src="https://circleci.com/gh/VirtusLab-Open-Source/strapi-plugin-mcp.svg?style=shield" alt="CircleCI" />
+  </a>
+</div>
 
-> ⚠️ **SECURITY WARNING**: This plugin exposes internal Strapi functionality and should **NEVER** be enabled in production environments. It is designed for development and local use only. Always disable this plugin before deploying to production.
+---
 
 A Strapi v5 plugin that integrates Model Context Protocol (MCP) functionality, enabling AI models to interact with your Strapi content and system information through a standardized protocol.
+
+> ⚠️ **SECURITY WARNING**: This plugin exposes internal Strapi functionality and should **NEVER** be enabled in production environments. It is designed for development and local use only. Always disable this plugin before deploying to production.
 
 ## Overview
 
