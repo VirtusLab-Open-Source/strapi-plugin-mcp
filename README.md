@@ -21,7 +21,24 @@ A Strapi v5 plugin that integrates Model Context Protocol (MCP) functionality, e
 
 > ⚠️ **SECURITY WARNING**: This plugin exposes internal Strapi functionality and should **NEVER** be enabled in production environments. It is designed for development and local use only. Always disable this plugin before deploying to production.
 
-## Overview
+1. [📖 Overview](#-overview)
+2. [📋 Prerequisites](#-prerequisites)
+3. [⏳ Installation](#-installation)
+4. [🔌 Integration Guide](#-integration-guide)
+5. [🔧 Configuration](#-configuration)
+   - [Memory Session Management](#memory-session-management)
+   - [Redis Session Management](#redis-session-management)
+6. [🚀 Usage](#-usage)
+7. [🛠️ Available MCP Tools](#%EF%B8%8F-available-mcp-tools)
+8. [💡 Usage Examples](#-usage-examples)
+   - [Content Type Exploration](#content-type-exploration)
+   - [System Information](#system-information)
+   - [Service Interaction](#service-interaction)
+   - [Common Workflows](#common-workflows)
+9. [👨‍💻 Development](#-development)
+10. [📝 License](#-license)
+
+## 📖 Overview
 
 This plugin provides MCP (Model Context Protocol) integration for Strapi, allowing AI assistants and other MCP clients to:
 
@@ -32,7 +49,7 @@ This plugin provides MCP (Model Context Protocol) integration for Strapi, allowi
 
 The plugin exposes MCP tools through a streamable HTTP transport, making it easy to integrate with Claude Desktop, Cursor, and other MCP-compatible clients.
 
-## Prerequisites
+## 📋 Prerequisites
 
 Before installing this plugin, ensure your environment meets the following requirements:
 
@@ -43,24 +60,20 @@ Before installing this plugin, ensure your environment meets the following requi
 
 **Note**: After installation, you may need to restart your Strapi server for the plugin to be fully initialized.
 
-## Table of Contents
+### Table of Contents
 
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Integration Guide](#integration-guide)
-- [Configuration](#configuration)
-  - [Memory Session Management](#memory-session-management)
-  - [Redis Session Management](#redis-session-management)
-- [Usage](#usage)
-- [Available MCP Tools](#available-mcp-tools)
-- [Usage Examples](#usage-examples)
-  - [Content Type Exploration](#content-type-exploration)
-  - [System Information](#system-information)
-  - [Service Interaction](#service-interaction)
-  - [Common Workflows](#common-workflows)
-- [Development](#development)
+1. [📖 Overview](#-overview)
+2. [📋 Prerequisites](#-prerequisites)
+3. [⏳ Installation](#-installation)
+4. [🔌 Integration Guide](#-integration-guide)
+5. [🔧 Configuration](#-configuration)
+6. [🚀 Usage](#-usage)
+7. [🛠️ Available MCP Tools](#%EF%B8%8F-available-mcp-tools)
+8. [💡 Usage Examples](#-usage-examples)
+9. [👨‍💻 Development](#-development)
+10. [📝 License](#-license)
 
-## Installation
+## ⏳ Installation
 
 Install the plugin using your preferred package manager:
 
@@ -77,7 +90,7 @@ pnpm add @sensinum/strapi-plugin-mcp
 
 After installation, the plugin will be automatically discovered by Strapi v5. No additional registration steps are required.
 
-## Integration Guide
+## 🔌 Integration Guide
 
 ### MCP Client Configuration
 
@@ -129,7 +142,7 @@ The plugin provides the following HTTP endpoints:
 
 All endpoints support session-based communication with automatic session management.
 
-## Configuration
+## 🔧 Configuration
 
 The plugin supports flexible session management through Strapi's configuration system. Add configuration to your `config/plugins.js` (or `config/plugins.ts`) file:
 
@@ -332,7 +345,7 @@ module.exports = {
 };
 ```
 
-## Usage
+## 🚀 Usage
 
 Once configured, the plugin automatically exposes MCP tools that clients can discover and use. The plugin provides tools for:
 
@@ -342,7 +355,7 @@ Once configured, the plugin automatically exposes MCP tools that clients can dis
 
 MCP clients can discover available tools through the standard MCP protocol and invoke them as needed.
 
-## Available MCP Tools
+## 🛠️ Available MCP Tools
 
 The plugin exposes several categories of tools:
 
@@ -388,7 +401,7 @@ mcpCustomService.registerTool({
 });
 ```
 
-## Usage Examples
+## 💡 Usage Examples
 
 Once your MCP client is connected, you can interact with your Strapi instance using natural language. Here are comprehensive examples of how to use the plugin's capabilities:
 
@@ -518,7 +531,7 @@ Perform complex schema analysis:
 
 The MCP integration makes it easy to explore and understand your Strapi instance through natural conversation, enabling better development planning and content management decisions.
 
-## Development
+## 👨‍💻 Development
 
 For development and testing:
 
@@ -543,3 +556,7 @@ pnpm verify
 ```
 
 The plugin follows Strapi v5 plugin architecture with separate admin and server components, built using TypeScript and the Model Context Protocol SDK.
+
+## 📝 License
+
+[MIT License](LICENSE.md) Copyright (c) [VirtusLab Sp. z o.o.](https://virtuslab.com/) &amp; [Strapi Solutions](https://strapi.io/).
