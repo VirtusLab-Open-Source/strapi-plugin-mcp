@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
-import { Strapi } from '@local-types/strapi';
 import { describe, expect, it, vi } from 'vitest';
-import { z } from 'zod';
+
+import { Strapi } from '@local-types/strapi';
 
 import { getInstanceInfoTool } from './instance-info.tool';
 
@@ -16,9 +16,8 @@ describe('getInstanceInfoTool', () => {
     // Then
     expect(tool.name).toBe('get-strapi-info');
     expect(tool.description).toBe('Get information about the current Strapi instance');
-    // Ensure the args schema accepts an empty object
-    const shape = tool.argsSchema as z.ZodObject<{}>;
-    expect(() => shape.parse({})).not.toThrow();
+    expect(tool.argsSchema).toEqual({});
+    expect((tool.argsSchema as any)?.parse).toBeUndefined();
   });
 
   it('returns version, environment and plugins from Strapi in response content', async () => {

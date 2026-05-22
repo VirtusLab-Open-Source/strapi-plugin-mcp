@@ -15,9 +15,8 @@ describe('getComponentsTool', () => {
     // Then
     expect(tool.name).toBe('get-components');
     expect(tool.description).toBe('Get all components');
-    // Ensure the args schema accepts an empty object
-    // Zod object should parse empty object without throwing
-    expect(() => (tool.argsSchema as any)?.parse?.({})).not.toThrow();
+    expect(tool.argsSchema).toEqual({});
+    expect((tool.argsSchema as any)?.parse).toBeUndefined();
   });
 
   it('returns all component UIDs from Strapi in response content', async () => {

@@ -1,5 +1,3 @@
-import { z } from 'zod';
-
 import { Strapi } from '@local-types/strapi';
 
 import { McpToolDefinitionBuilder } from '../../../common';
@@ -8,7 +6,7 @@ export const getInstanceInfoTool: McpToolDefinitionBuilder<{}> = (strapi: Strapi
   return {
     name: 'get-strapi-info',
     description: 'Get information about the current Strapi instance',
-    argsSchema: z.object({}),
+    argsSchema: {},
     callback: async () => ({
       content: [
         {
