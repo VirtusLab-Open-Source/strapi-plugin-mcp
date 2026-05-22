@@ -1,5 +1,4 @@
 import { CallToolResult } from '@modelcontextprotocol/sdk/types';
-import { z } from 'zod';
 
 import { Strapi } from '@local-types/strapi';
 
@@ -20,7 +19,7 @@ export const getServicesTool: McpToolDefinitionBuilder<{}> = (strapi: Strapi) =>
   return {
     name: 'get-services',
     description: 'Get all services',
-    argsSchema: z.object({}),
+    argsSchema: {},
     callback: async () => {
       try {
         const servicesRegistry = strapi.services;
