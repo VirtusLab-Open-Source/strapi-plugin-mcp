@@ -1,7 +1,6 @@
+import { faker } from '@faker-js/faker';
 import { createStrapiMock } from '@test/strapi.mock';
 import { describe, expect, it } from 'vitest';
-import { z } from 'zod';
-import { faker } from '@faker-js/faker';
 
 import { getServicesTool } from './services.tool';
 
@@ -16,9 +15,8 @@ describe('getServicesTool', () => {
     // Then
     expect(tool.name).toBe('get-services');
     expect(tool.description).toBe('Get all services');
-
-    const shape = tool.argsSchema as z.ZodObject<{}>;
-    expect(() => shape.parse({})).not.toThrow();
+    expect(tool.argsSchema).toEqual({});
+    expect((tool.argsSchema as any)?.parse).toBeUndefined();
   });
 
   it('maps internal and plugin services correctly', async () => {

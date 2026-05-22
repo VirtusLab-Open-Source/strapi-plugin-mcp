@@ -1,5 +1,4 @@
 import { UID } from '@strapi/strapi';
-import { z } from 'zod';
 
 import { Strapi } from '@local-types/strapi';
 
@@ -11,7 +10,7 @@ export const getComponentsTool: McpToolDefinitionBuilder<{}> = (strapi: Strapi) 
   return {
     name: 'get-components',
     description: 'Get all components',
-    argsSchema: z.object({}),
+    argsSchema: {},
     callback: async () => ({
       content: [
         {
