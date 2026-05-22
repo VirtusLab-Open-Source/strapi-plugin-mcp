@@ -15,9 +15,7 @@ describe('getContentTypesTool', () => {
     // Then
     expect(tool.name).toBe('get-content-types');
     expect(tool.description).toBe('Get all content types');
-    // Ensure the args schema accepts an empty object
-    // Zod object should parse empty object without throwing
-    expect(() => (tool.argsSchema as any)?.parse?.({})).not.toThrow();
+    expect(tool.argsSchema).toEqual({});
   });
 
   it('returns all content type UIDs from Strapi in response content', async () => {
